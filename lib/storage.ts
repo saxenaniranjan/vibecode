@@ -42,6 +42,10 @@ function isSupabaseConfigured(): boolean {
   return true;
 }
 
+function isServerlessProduction(): boolean {
+  return process.env.NODE_ENV === "production" || process.env.VERCEL === "1";
+}
+
 function getSupabaseClient() {
   const url = assertStorageEnv("SUPABASE_URL");
   const serviceKey = assertStorageEnv("SUPABASE_SERVICE_ROLE_KEY");
@@ -94,6 +98,12 @@ export async function uploadImageToCloud(params: {
   }
 
   if (!isSupabaseConfigured()) {
+    if (isServerlessProduction()) {
+      throw new Error(
+        "Image storage is not configured. Set SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, and SUPABASE_STORAGE_BUCKET in Vercel."
+      );
+    }
+
     return uploadImageLocally({ file, deviceId });
   }
 
@@ -124,7 +134,15 @@ export async function uploadImageToCloud(params: {
     }
 
     return { imageUrl: data.publicUrl };
-  } catch {
+  } catch (error) {
+    if (isServerlessProduction()) {
+      const message =
+        error instanceof Error && error.message
+          ? error.message
+          : "Image upload failed";
+      throw new Error(`Cloud upload failed: ${message}`);
+    }
+
     return uploadImageLocally({ file, deviceId });
   }
 }
