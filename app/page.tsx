@@ -1,5 +1,5 @@
-import Typewriter from "./components/Typewriter";
+import TypewriterEditor from "@/components/TypewriterEditor";
 
-export default function Home() {
-  return <Typewriter />;
+export default function HomePage() {
+  return <TypewriterEditor />;
 }

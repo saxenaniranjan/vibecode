@@ -1,0 +1,53 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum PaperColor {
+  parchment
+  rose
+}
+
+model Device {
+  id         String   @id @db.Uuid
+  paperColor PaperColor
+  createdAt  DateTime @default(now())
+  letters    Letter[]
+
+  @@map("devices")
+}
+
+model Letter {
+  id             String   @id @default(uuid()) @db.Uuid
+  authorDeviceId String   @db.Uuid
+  content        String   @db.Text
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  isBookmarked   Boolean  @default(false)
+  isFinished     Boolean  @default(false)
+
+  author Device @relation(fields: [authorDeviceId], references: [id], onDelete: Restrict)
+  images Image[]
+
+  @@index([authorDeviceId])
+  @@index([updatedAt])
+  @@index([isBookmarked])
+  @@index([isFinished])
+  @@map("letters")
+}
+
+model Image {
+  id         String   @id @default(cuid())
+  letterId   String   @db.Uuid
+  imageUrl   String
+  uploadedAt DateTime @default(now())
+
+  letter Letter @relation(fields: [letterId], references: [id], onDelete: Cascade)
+
+  @@index([letterId])
+  @@map("images")
+}
